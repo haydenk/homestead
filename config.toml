@@ -1,0 +1,150 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Homestead — example configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+title         = "Homestead"
+subtitle      = "My self-hosted dashboard"
+logo          = "🏠"
+columns       = 4             # cards per row (1-6)
+check_interval = 30           # seconds between service health checks
+footer        = "Running on Proxmox"
+
+
+# ─── Networking ──────────────────────────────────────────────────────────────
+[[sections]]
+name = "Networking"
+icon = "🌐"
+
+  [[sections.items]]
+  title        = "Router"
+  url          = "http://router.lan"
+  description  = "Home router admin panel"
+  icon         = "🔀"
+  tags         = ["networking"]
+  status_check = true
+
+  [[sections.items]]
+  title        = "Pi-hole"
+  url          = "http://pi.hole/admin"
+  description  = "DNS ad blocker"
+  icon         = "🕳️"
+  tags         = ["networking", "dns"]
+  status_check = true
+
+  [[sections.items]]
+  title        = "Unifi"
+  url          = "https://unifi.local"
+  description  = "Network controller"
+  icon         = "📡"
+  tags         = ["networking", "wifi"]
+  status_check = true
+
+
+# ─── Media ───────────────────────────────────────────────────────────────────
+[[sections]]
+name = "Media"
+icon = "🎬"
+
+  [[sections.items]]
+  title        = "Jellyfin"
+  url          = "http://jellyfin.local:8096"
+  description  = "Open source media server"
+  icon         = "📺"
+  tags         = ["media"]
+  status_check = true
+  color        = "#00a4dc"
+
+  [[sections.items]]
+  title        = "Plex"
+  url          = "http://plex.local:32400/web"
+  description  = "Media streaming server"
+  icon         = "🎞️"
+  tags         = ["media"]
+  status_check = true
+
+  [[sections.items]]
+  title        = "Sonarr"
+  url          = "http://sonarr.local:8989"
+  description  = "TV series management"
+  icon         = "📡"
+  tags         = ["media", "arr"]
+  status_check = true
+
+  [[sections.items]]
+  title        = "Radarr"
+  url          = "http://radarr.local:7878"
+  description  = "Movie management"
+  icon         = "🎥"
+  tags         = ["media", "arr"]
+  status_check = true
+
+
+# ─── Infrastructure ──────────────────────────────────────────────────────────
+[[sections]]
+name = "Infrastructure"
+icon = "🖥️"
+
+  [[sections.items]]
+  title        = "Proxmox"
+  url          = "https://proxmox.vm:8006"
+  description  = "Virtualisation platform"
+  icon         = "🔵"
+  tags         = ["infra", "vms"]
+  status_check = true
+  color        = "#e57000"
+
+  [[sections.items]]
+  title        = "Portainer"
+  url          = "http://portainer.local:9000"
+  description  = "Docker container manager"
+  icon         = "🐳"
+  tags         = ["infra", "docker"]
+  status_check = true
+
+  [[sections.items]]
+  title        = "Grafana"
+  url          = "http://grafana.local:3000"
+  description  = "Metrics & dashboards"
+  icon         = "📊"
+  tags         = ["infra", "monitoring"]
+  status_check = true
+  color        = "#f46800"
+
+  [[sections.items]]
+  title        = "Uptime Kuma"
+  url          = "http://uptime.local:3001"
+  description  = "Self-hosted uptime monitor"
+  icon         = "💚"
+  tags         = ["infra", "monitoring"]
+  status_check = true
+
+
+# ─── Development ─────────────────────────────────────────────────────────────
+[[sections]]
+name = "Development"
+icon = "💻"
+
+  [[sections.items]]
+  title        = "Forgejo"
+  url          = "http://git.lan"
+  description  = "Self-hosted Git service"
+  icon         = "🐱"
+  tags         = ["dev", "git"]
+  status_check = true
+
+  [[sections.items]]
+  title        = "Drone CI"
+  url          = "http://drone.local"
+  description  = "Continuous integration"
+  icon         = "🚁"
+  tags         = ["dev", "ci"]
+  status_check = true
+
+  [[sections.items]]
+  title        = "VS Code Server"
+  url          = "http://code.local:8443"
+  description  = "Browser-based IDE"
+  icon         = "🆚"
+  tags         = ["dev"]
+  status_check = true
+  target       = "_self"

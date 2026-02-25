@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#MISE description="Install binary and systemd service on a Linux host (requires sudo)"
+#MISE depends=["build"]
+set -euo pipefail
+
+sudo install -Dm755 homestead /usr/bin/homestead
+sudo install -Dm644 homestead.service /lib/systemd/system/homestead.service
+
+if ! id -u homestead &>/dev/null; then
+  sudo useradd --system --no-create-home --shell /usr/sbin/nologin homestead
+fi
+
+if [ ! -f /etc/homestead/config.toml ]; then
+  sudo mkdir -p /etc/homestead
+  sudo install -Dm644 config.toml /etc/homestead/config.toml
+  sudo chown -R homestead:homestead /etc/homestead
+  echo "Default config installed to /etc/homestead/config.toml — edit it before starting."
+fi
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now homestead
+
+echo ""
+echo "Homestead is running at http://localhost:8080"
+echo "Edit config  : sudo nano /etc/homestead/config.toml"
+echo "Reload config: curl -X POST http://localhost:8080/api/reload"
+echo "View logs    : journalctl -u homestead -f"

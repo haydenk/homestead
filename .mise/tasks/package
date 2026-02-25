@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#MISE description="Cross-compile and build .deb, .rpm, and .apk packages for amd64 and arm64"
+set -euo pipefail
+
+VERSION=$(git describe --tags --always 2>/dev/null | sed 's/^v//' || echo "0.1.0")
+mkdir -p dist
+
+for GOARCH in amd64 arm64; do
+  echo "→ Compiling linux/${GOARCH}…"
+  GOOS=linux GOARCH=${GOARCH} CGO_ENABLED=0 \
+    go build -ldflags="-s -w -X main.version=${VERSION}" -o homestead .
+
+  for PKG in deb rpm apk; do
+    echo "  packaging ${PKG}…"
+    VERSION="${VERSION}" GOARCH="${GOARCH}" \
+      nfpm package --config nfpm.yaml --packager "${PKG}" --target dist/
+  done
+
+  rm -f homestead
+done
+
+echo ""
+echo "Packages written to dist/:"
+ls -lh dist/

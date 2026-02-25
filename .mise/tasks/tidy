@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Tidy and verify Go dependencies"
+set -euo pipefail
+
+go mod tidy
+go mod verify
+echo "go.mod and go.sum are clean"

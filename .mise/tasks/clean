@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Remove build artifacts"
+set -euo pipefail
+
+rm -f homestead
+echo "Cleaned"

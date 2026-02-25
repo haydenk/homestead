@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Build and run the Docker image locally on port 8080"
+#MISE depends=["docker:build"]
+set -euo pipefail
+
+docker run --rm -p 8080:8080 \
+  -v "$(pwd)/config:/app/config:ro" \
+  homestead:latest

@@ -1,0 +1,41 @@
+name:        homestead
+arch:        "${GOARCH}"
+platform:    linux
+version:     "${VERSION}"
+maintainer:  Homestead <noreply@example.com>
+description: Self-hosted personal dashboard
+homepage:    https://github.com/your-username/homestead
+license:     MIT
+
+contents:
+  - src: homestead
+    dst: /usr/bin/homestead
+    file_info:
+      mode: 0755
+
+  - src: homestead.service
+    dst: /lib/systemd/system/homestead.service
+    file_info:
+      mode: 0644
+
+  # config|noreplace: installed on first setup, never overwritten by upgrades
+  - src: config.toml
+    dst: /etc/homestead/config.toml
+    type: config|noreplace
+    file_info:
+      mode: 0644
+
+scripts:
+  postinstall: packaging/postinstall.sh
+  preremove:   packaging/preremove.sh
+
+overrides:
+  deb:
+    depends:
+      - systemd
+  rpm:
+    depends:
+      - systemd
+  apk:
+    depends:
+      - openrc

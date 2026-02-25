@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Build then run with default config"
+#MISE depends=["build"]
+set -euo pipefail
+
+./homestead --config config.toml

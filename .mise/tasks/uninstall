@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Disable and remove the systemd service and binary"
+set -euo pipefail
+
+BINARY=homestead
+
+sudo systemctl disable --now ${BINARY} 2>/dev/null || true
+sudo rm -f /etc/systemd/system/${BINARY}.service
+sudo rm -f /opt/${BINARY}/${BINARY}
+sudo systemctl daemon-reload
+
+echo "Homestead service removed. Config left intact at /opt/${BINARY}/config/"

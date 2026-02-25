@@ -1,0 +1,4 @@
+homestead
+dist/
+*.exe
+.DS_Store
