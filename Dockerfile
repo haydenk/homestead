@@ -1,6 +1,9 @@
 # ── Build stage ───────────────────────────────────────────────────────────────
 FROM golang:1.22-alpine AS builder
 
+ARG TARGETARCH=amd64
+ARG VERSION=dev
+
 WORKDIR /build
 
 # Cache dependency download separately from source
@@ -9,8 +12,8 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -ldflags="-s -w -X main.version=$(git describe --tags --always 2>/dev/null || echo dev)" \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
+    go build -ldflags="-s -w -X main.version=${VERSION}" \
     -o homestead .
 
 # ── Final stage ───────────────────────────────────────────────────────────────
