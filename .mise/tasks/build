@@ -2,8 +2,13 @@
 #MISE description="Compile a production binary"
 set -euo pipefail
 
-BINARY=homestead
+: "${GOOS:=$(go env GOOS)}"
+: "${GOARCH:=$(go env GOARCH)}"
+: "${OUTPUT:=homestead}"
 VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
 
-go build -ldflags="-s -w -X main.version=${VERSION}" -o "${BINARY}" .
-echo "Built ${BINARY} (${VERSION})"
+mkdir -p "$(dirname "$OUTPUT")"
+
+CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" \
+  go build -ldflags="-s -w -X main.version=${VERSION}" -o "${OUTPUT}" .
+echo "Built ${OUTPUT} (${VERSION})"
