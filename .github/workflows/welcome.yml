@@ -1,0 +1,83 @@
+name: Welcome
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    name: Greet first-time contributors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            const actor = context.payload.sender.login;
+            const isIssue = !!context.payload.issue;
+            const isPR    = !!context.payload.pull_request;
+
+            // Skip the repo owner — no need to welcome yourself
+            if (actor === owner) return;
+
+            // Check contribution history on this repo
+            let issueCount = 0;
+            let prCount    = 0;
+
+            try {
+              const issues = await github.rest.issues.listForRepo({
+                owner, repo,
+                creator: actor,
+                state: 'all',
+                per_page: 2,
+              });
+              // GitHub issues endpoint returns PRs too; filter them
+              issueCount = issues.data.filter(i => !i.pull_request).length;
+              prCount    = issues.data.filter(i =>  i.pull_request).length;
+            } catch (_) { /* ignore, still welcome */ }
+
+            const isFirstIssue = isIssue && issueCount <= 1;
+            const isFirstPR    = isPR    && prCount    <= 1;
+
+            if (!isFirstIssue && !isFirstPR) return;
+
+            let message;
+
+            if (isFirstIssue) {
+              message = `👋 Hi @${actor}, thanks for opening your first issue on Homestead!
+
+            We'll take a look as soon as possible. In the meantime:
+            - Check the [README](https://github.com/${owner}/${repo}/blob/master/README.md) for configuration examples and runtime options.
+            - For questions or general discussion, [GitHub Discussions](https://github.com/${owner}/${repo}/discussions) is the best place.`;
+            }
+
+            if (isFirstPR) {
+              message = `👋 Hi @${actor}, thanks for your first pull request on Homestead!
+
+            A few things to double-check before review:
+            - Branch follows gitflow naming: \`feature/\`, \`bugfix/\`, \`hotfix/\`, or \`release/\`
+            - Commits are **signed** (required by the branch ruleset)
+            - \`go test ./...\` passes and \`go fmt ./...\` has been run
+            - \`CHANGELOG.md\` is updated for features and bug fixes
+
+            We appreciate the contribution — we'll review it shortly!`;
+            }
+
+            if (!message) return;
+
+            const number = isIssue
+              ? context.payload.issue.number
+              : context.payload.pull_request.number;
+
+            await github.rest.issues.createComment({
+              owner, repo,
+              issue_number: number,
+              body: message,
+            });

@@ -1,0 +1,52 @@
+# Labels applied to PRs by actions/labeler based on changed files.
+# Docs: https://github.com/actions/labeler
+
+"go":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+
+"ui":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "web/**"
+
+"configuration":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "internal/config/**"
+      - "config.toml"
+
+"docker":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "Dockerfile"
+      - ".dockerignore"
+
+"packaging":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "nfpm.yaml"
+      - "packaging/**"
+      - "homestead.service"
+
+"ci/cd":
+  - changed-files:
+    - any-glob-to-any-file:
+      - ".github/**"
+      - ".mise.toml"
+      - ".mise/**"
+
+"documentation":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "*.md"
+      - "docs/**"
+
+"dependencies":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "go.mod"
+      - "go.sum"

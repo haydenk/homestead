@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions & Questions
+    url: https://github.com/haydenk/homestead/discussions
+    about: Ask questions, share your setup, and discuss ideas here instead of opening an issue.

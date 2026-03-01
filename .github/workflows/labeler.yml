@@ -1,0 +1,60 @@
+name: Labeler
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  # ── Label PRs by changed files ───────────────────────────────────────────────
+  label-pr:
+    name: Label PR
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@8558fd74291d67161a8a78ce36a881fa63b766a9 # v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+          sync-labels: false
+
+  # ── Label issues by PR branch prefix in title ────────────────────────────────
+  label-issue:
+    name: Label Issue
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const title = context.payload.issue.title.toLowerCase();
+            const body  = (context.payload.issue.body || '').toLowerCase();
+            const text  = title + ' ' + body;
+
+            const labels = [];
+
+            // Template-based labels are already applied via ISSUE_TEMPLATE labels: field.
+            // Add supplemental labels based on keywords.
+
+            if (/\b(docker|container|image|ghcr)\b/.test(text))    labels.push('docker');
+            if (/\b(config|toml|configuration|section|item)\b/.test(text)) labels.push('configuration');
+            if (/\b(ui|frontend|css|style|theme|dark|light|layout)\b/.test(text)) labels.push('ui');
+            if (/\b(health.?check|status|up|down|monitor)\b/.test(text)) labels.push('health-check');
+            if (/\b(package|deb|rpm|apk|systemd|service)\b/.test(text)) labels.push('packaging');
+            if (/\b(doc|readme|changelog|comment)\b/.test(text))   labels.push('documentation');
+            if (/\b(ci|cd|action|workflow|pipeline|release)\b/.test(text)) labels.push('ci/cd');
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner:        context.repo.owner,
+                repo:         context.repo.repo,
+                issue_number: context.payload.issue.number,
+                labels,
+              });
+            }

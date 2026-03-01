@@ -1,0 +1,58 @@
+name: Stale
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"   # every Monday at 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    name: Mark & close stale items
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # ── Issues ──────────────────────────────────────────────────────────
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-label: stale
+          stale-issue-message: |
+            This issue has been inactive for **60 days** and is being marked as stale.
+
+            If this is still relevant, please leave a comment to keep it open — even a quick "still seeing this" helps.
+            Issues that remain inactive for another 14 days will be closed automatically.
+          close-issue-message: |
+            This issue has been closed automatically due to inactivity.
+
+            If the problem persists or the feature is still needed, please open a new issue with up-to-date information.
+            Thank you for contributing!
+          close-issue-reason: not_planned
+
+          # ── Pull Requests ────────────────────────────────────────────────────
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          stale-pr-label: stale
+          stale-pr-message: |
+            This pull request has been inactive for **30 days** and is being marked as stale.
+
+            Please rebase, address any review feedback, or leave a comment if you plan to continue working on it.
+            PRs that remain inactive for another 7 days will be closed.
+          close-pr-message: |
+            This pull request has been closed automatically due to inactivity.
+
+            If you'd like to continue this work, please reopen the PR or open a new one.
+
+          # ── Exempt labels ────────────────────────────────────────────────────
+          exempt-issue-labels: "bug,help wanted,pinned,wontfix,security"
+          exempt-pr-labels: "help wanted,pinned,wontfix,dependencies"
+
+          # ── Limits ───────────────────────────────────────────────────────────
+          operations-per-run: 60
+          remove-stale-when-updated: true
+          ascending: true

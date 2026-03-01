@@ -1,0 +1,59 @@
+name: Question / Help
+description: Ask a question about configuration, usage, or behaviour.
+title: "question: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening a question, please check the [README](https://github.com/haydenk/homestead/blob/master/README.md) and [Discussions](https://github.com/haydenk/homestead/discussions) — your answer may already be there.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What would you like to know?
+      placeholder: "How do I...? Why does...? Is it possible to...?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What I've already tried
+      description: Steps you took, docs you read, config you attempted.
+      placeholder: |
+        - Read the README section on health checks
+        - Tried setting `status_check = false`
+        - Checked the logs but saw no errors
+
+  - type: markdown
+    attributes:
+      value: "### Environment"
+
+  - type: input
+    id: version
+    attributes:
+      label: Homestead version
+      placeholder: "e.g. 0.1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Installation method
+      options:
+        - Binary (from GitHub releases)
+        - Docker
+        - deb package
+        - rpm package
+        - apk package
+        - Built from source
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: OS / Platform
+      placeholder: "e.g. Ubuntu 24.04 LTS x86_64, macOS 15 (Apple Silicon)"

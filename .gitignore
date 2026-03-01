@@ -2,3 +2,26 @@ homestead
 dist/
 *.exe
 .DS_Store
+
+# Secrets & credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cert
+*.der
+
+# Local config overrides (use config.toml for the committed example)
+config.local.toml
+config.local.*
+
+# OS & editor artifacts
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/

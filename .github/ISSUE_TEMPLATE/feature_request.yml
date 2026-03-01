@@ -1,0 +1,55 @@
+name: Feature Request
+description: Suggest a new feature or improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to improve Homestead? Great — please share it! For general discussion or questions, use [Discussions](https://github.com/haydenk/homestead/discussions) instead.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What use case or frustration is this addressing?
+      placeholder: "I find it hard to... / It would be useful if Homestead could..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe what you'd like to see. Be as specific as you can.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Homestead does this affect?
+      multiple: true
+      options:
+        - Configuration (config.toml)
+        - Dashboard UI
+        - Health checks
+        - API
+        - Docker / packaging
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you've thought about or workarounds you're currently using?
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Mockups, screenshots, reference implementations, or links.
