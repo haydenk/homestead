@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.1.1] - 2026-03-07
+
+### Added
+
+- **Code of Conduct** — Added `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1)
+- **Security Policy** — Added `SECURITY.md` with supported versions and vulnerability reporting instructions
+- **Dependabot** — Automated dependency updates for Go modules, Docker base images, and GitHub Actions
+
+### Changed
+
+- **Go runtime** — Updated from `golang:1.22-alpine` to `golang:1.26-alpine`
+- **Alpine base image** — Updated from `3.19` to `3.23`
+- **`github.com/BurntSushi/toml`** — Updated from `1.4.0` to `1.6.0`
+- **`docker/build-push-action`** — Updated from `6.19.2` to `7.0.0`
+- **`docker/metadata-action`** — Updated from `5.10.0` to `6.0.0`
+- **`actions/github-script`** — Updated from `7.1.0` to `8.0.0`
+- **`actions/stale`** — Updated from `9.1.0` to `10.2.0`
+- **`jdx/mise-action`** — Updated from `3.6.1` to `3.6.3`
+
 ## [0.1.0] - 2026-03-06
 
 ### Added
