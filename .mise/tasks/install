@@ -4,7 +4,7 @@
 set -euo pipefail
 
 sudo install -Dm755 homestead /usr/bin/homestead
-sudo install -Dm644 homestead.service /lib/systemd/system/homestead.service
+sudo install -Dm644 packaging/homestead.service /lib/systemd/system/homestead.service
 
 if ! id -u homestead &>/dev/null; then
   sudo useradd --system --no-create-home --shell /usr/sbin/nologin homestead
@@ -12,7 +12,7 @@ fi
 
 if [ ! -f /etc/homestead/config.toml ]; then
   sudo mkdir -p /etc/homestead
-  sudo install -Dm644 config.toml /etc/homestead/config.toml
+  sudo install -Dm644 config.example.toml /etc/homestead/config.toml
   sudo chown -R homestead:homestead /etc/homestead
   echo "Default config installed to /etc/homestead/config.toml — edit it before starting."
 fi

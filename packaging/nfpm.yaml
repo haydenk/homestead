@@ -13,13 +13,13 @@ contents:
     file_info:
       mode: 0755
 
-  - src: homestead.service
+  - src: packaging/homestead.service
     dst: /lib/systemd/system/homestead.service
     file_info:
       mode: 0644
 
   # config|noreplace: installed on first setup, never overwritten by upgrades
-  - src: config.toml
+  - src: config.example.toml
     dst: /etc/homestead/config.toml
     type: config|noreplace
     file_info:

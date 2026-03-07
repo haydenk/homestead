@@ -10,7 +10,7 @@ mkdir -p dist
 
 for PKG in deb rpm apk; do
   echo "  packaging ${PKG} (linux/${GOARCH})…"
-  nfpm package --config nfpm.yaml --packager "${PKG}" --target dist/
+  nfpm package --config packaging/nfpm.yaml --packager "${PKG}" --target dist/
 done
 
 echo ""

@@ -30,7 +30,7 @@ WORKDIR /app
 COPY --from=builder /build/homestead .
 
 # Ship a default config; users mount their own at /app/config/config.toml
-COPY config.toml ./config/config.toml
+COPY config.example.toml ./config/config.toml
 
 RUN chown -R homestead:homestead /app
 
