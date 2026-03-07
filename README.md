@@ -18,12 +18,12 @@ A lightweight, self-hosted personal dashboard for monitoring and accessing your 
 ## Features
 
 - **Service Dashboard** — Centralized hub for all your self-hosted applications organized into sections
-- **Real-time Health Checks** — Background HTTP/HTTPS status monitoring with configurable intervals
+- **Real-time Health Checks** — Background HTTP/HTTPS status monitoring pushed to the UI over WebSocket
 - **Search & Filter** — Full-text search across service titles, descriptions, and tags (`/` or `Ctrl+K`)
 - **Keyboard Shortcuts** — `/` or `Ctrl+K` to search, `R` to refresh, `Esc` to close
 - **Light / Dark Theme** — Automatic or explicit theme selection with custom accent colors per card
 - **Live Config Reload** — Reload configuration without restarting via `POST /api/reload`
-- **Minimal Footprint** — Single binary, ~1,000 lines of code, one external Go dependency
+- **Minimal Footprint** — Single binary, ~1,000 lines of code, two external Go dependencies
 
 ## Installation
 
@@ -115,15 +115,17 @@ Configuration can be overridden via flags or environment variables:
 | Flag | Env var | Default | Description |
 |------|---------|---------|-------------|
 | `-config` | `HOMESTEAD_CONFIG` | `config.toml` | Path to config file |
-| `-host` | `HOMESTEAD_HOST` | `127.0.0.1` | Bind address |
+| `-host` | `HOMESTEAD_HOST` | *(all interfaces)* | Bind address |
 | `-port` | `HOMESTEAD_PORT` | `8080` | Listen port |
 
-```bash
-# Using flags
-./homestead -host 0.0.0.0 -port 9000 -config /etc/homestead/config.toml
+By default Homestead listens on all IPv4 and IPv6 interfaces. Pass `-host` to restrict to a specific address.
 
-# Using environment variables
-HOMESTEAD_HOST=0.0.0.0 HOMESTEAD_PORT=9000 ./homestead
+```bash
+# Default: all interfaces, IPv4 + IPv6
+./homestead -config /etc/homestead/config.toml
+
+# Loopback only
+./homestead -host 127.0.0.1 -port 9000
 ```
 
 ## API
@@ -131,25 +133,11 @@ HOMESTEAD_HOST=0.0.0.0 HOMESTEAD_PORT=9000 ./homestead
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/` | Web UI |
-| `GET` | `/api/config` | Full configuration as JSON |
-| `GET` | `/api/status` | Health check statuses for all items |
-| `GET` | `/api/status/{id}` | Health check status for a single item |
+| `WS` | `/ws` | Real-time status updates (WebSocket) |
 | `POST` | `/api/reload` | Reload config from disk and restart checks |
 | `GET` | `/api/health` | Health probe (`{"status":"ok","time":"..."}`) |
 
-**Status response example:**
-
-```json
-{
-  "id": "s0-i0",
-  "url": "https://jellyfin.lan",
-  "up": true,
-  "statusCode": 200,
-  "responseTimeMs": 145,
-  "lastChecked": "2024-02-24T16:30:00Z",
-  "error": ""
-}
-```
+The WebSocket endpoint (`/ws`) pushes the full status snapshot immediately on connect, then again after each check round. See [docs/api.md](docs/api.md) for the full reference.
 
 ## Development
 
@@ -160,7 +148,7 @@ Requirements: Go 1.22+. Tool versions are managed via [mise](https://mise.jdx.de
 mise install
 
 # Run locally
-go run . -config config.toml -host 0.0.0.0
+go run . -config config.toml
 
 # Format
 go fmt ./...
@@ -181,8 +169,9 @@ A VS Code dev container is included (`.devcontainer/`) with Go, mise, and the TO
 │   ├── config/config.go        # TOML config structs and loader
 │   ├── checker/checker.go      # Background health check engine
 │   └── server/
-│       ├── server.go           # HTTP server setup and routing
-│       └── handlers.go         # API handler implementations
+│       ├── server.go           # HTTP server setup, routing, dual-stack listener
+│       ├── hub.go              # WebSocket connection hub and broadcaster
+│       └── handlers.go         # HTTP and WebSocket handler implementations
 └── web/
     ├── index.html              # UI template
     ├── app.js                  # Frontend logic (vanilla JS)
@@ -191,7 +180,7 @@ A VS Code dev container is included (`.devcontainer/`) with Go, mise, and the TO
 
 ## Tech stack
 
-- **Backend:** Go standard library + [`BurntSushi/toml`](https://github.com/BurntSushi/toml)
+- **Backend:** Go standard library + [`BurntSushi/toml`](https://github.com/BurntSushi/toml) + [`gorilla/websocket`](https://github.com/gorilla/websocket)
 - **Frontend:** HTML5, vanilla JavaScript (ES2020+), CSS3 custom properties
 - **Packaging:** Docker (Alpine), systemd, nfpm (deb/rpm/apk)
 

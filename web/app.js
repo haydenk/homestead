@@ -3,19 +3,29 @@
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   bindEvents();
-  loadStatus();
-  startPolling();
+  connectWS();
 });
 
-// ── Status updates ────────────────────────────────────────────────────────────
-async function loadStatus() {
-  try {
-    const res = await fetch("/api/status");
-    if (!res.ok) return;
-    updateStatusDots(await res.json());
-  } catch (e) {
-    console.warn("status fetch:", e);
-  }
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+let _ws = null;
+let _wsReconnectTimer = null;
+
+function connectWS() {
+  clearTimeout(_wsReconnectTimer);
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const ws = (_ws = new WebSocket(`${proto}//${location.host}/ws`));
+
+  ws.onmessage = (e) => {
+    try {
+      updateStatusDots(JSON.parse(e.data));
+    } catch (_) {}
+  };
+
+  ws.onclose = () => {
+    if (ws === _ws) _wsReconnectTimer = setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = () => ws.close();
 }
 
 function updateStatusDots(statuses) {
@@ -28,11 +38,6 @@ function updateStatusDots(statuses) {
     dot.dataset.tooltip = s.up ? `Online \u00b7 ${s.responseTimeMs}ms` : `Offline${s.error ? `: ${s.error}` : ""}`;
     dot.setAttribute("aria-label", `status ${cls}`);
   });
-}
-
-// ── Polling ───────────────────────────────────────────────────────────────────
-function startPolling() {
-  setInterval(loadStatus, Math.max(CHECK_INTERVAL, 5000));
 }
 
 // ── Search / filter ───────────────────────────────────────────────────────────

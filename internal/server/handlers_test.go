@@ -11,6 +11,7 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"homestead/internal/checker"
 	"homestead/internal/config"
 )
@@ -164,114 +165,83 @@ func TestStyleCSS_EmptyStateHiddenOverride(t *testing.T) {
 	}
 }
 
-// --- GET /api/status ---
+// --- GET /ws ---
 
-func TestHandleStatus_EmptyMap(t *testing.T) {
-	s := newTestServer(&config.Config{}, "")
-	req := httptest.NewRequest(http.MethodGet, "/api/status", nil)
-	w := httptest.NewRecorder()
+// TestWS_ReceivesSnapshotOnConnect verifies that a new WebSocket client immediately
+// receives the current status snapshot without waiting for the next check round.
+func TestWS_ReceivesSnapshotOnConnect(t *testing.T) {
+	ts := newIntegrationServer(t)
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
 
-	s.handleStatus(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", w.Code)
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("ws dial: %v", err)
 	}
-	if cc := w.Header().Get("Cache-Control"); cc != "no-cache" {
-		t.Errorf("Cache-Control = %q, want no-cache", cc)
+	defer conn.Close()
+
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		t.Fatalf("read initial message: %v", err)
 	}
 
-	var body map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if len(body) != 0 {
-		t.Errorf("expected empty status map, got %d entries", len(body))
+	var statuses map[string]any
+	if err := json.Unmarshal(msg, &statuses); err != nil {
+		t.Fatalf("unmarshal: %v — body: %s", err, msg)
 	}
 }
 
-func TestHandleStatus_ReturnsCheckerResults(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// TestWS_ReceivesBroadcastAfterCheck verifies that connected clients receive a push
+// after a check round completes.
+func TestWS_ReceivesBroadcastAfterCheck(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer ts.Close()
+	defer backend.Close()
 
+	webFS := fstest.MapFS{
+		"web/index.html": &fstest.MapFile{Data: []byte(`<html><body>INDEX</body></html>`)},
+		"web/style.css":  &fstest.MapFile{Data: []byte(`body{}`)},
+		"web/app.js":     &fstest.MapFile{Data: []byte(`"use strict";`)},
+	}
 	cfg := &config.Config{
 		CheckInterval: 60,
 		Sections: []config.Section{
-			{Items: []config.Item{
-				{ID: "s0-i0", URL: ts.URL, StatusCheck: true},
-			}},
+			{Items: []config.Item{{ID: "s0-i0", URL: backend.URL, StatusCheck: true}}},
 		},
 	}
 	chk := checker.New(cfg)
+	srv := New(cfg, "", chk, "127.0.0.1", "0", webFS)
+	ts := httptest.NewServer(srv.mux)
+	t.Cleanup(ts.Close)
+
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("ws dial: %v", err)
+	}
+	defer conn.Close()
+
+	// Drain the initial snapshot.
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if _, _, err := conn.ReadMessage(); err != nil {
+		t.Fatalf("read initial snapshot: %v", err)
+	}
+
+	// Trigger a check and expect a broadcast.
 	chk.CheckNow()
-	time.Sleep(150 * time.Millisecond) // wait for async probe
-
-	s := &Server{cfg: cfg, checker: chk}
-	req := httptest.NewRequest(http.MethodGet, "/api/status", nil)
-	w := httptest.NewRecorder()
-
-	s.handleStatus(w, req)
-
-	var body map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if _, ok := body["s0-i0"]; !ok {
-		t.Error("expected s0-i0 in status response")
-	}
-}
-
-// --- GET /api/status/{id} ---
-
-func TestHandleStatusByID_NotFound(t *testing.T) {
-	s := newTestServer(&config.Config{}, "")
-	req := httptest.NewRequest(http.MethodGet, "/api/status/s0-i0", nil)
-	req.SetPathValue("id", "s0-i0")
-	w := httptest.NewRecorder()
-
-	s.handleStatusByID(w, req)
-
-	if w.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404", w.Code)
-	}
-}
-
-func TestHandleStatusByID_Found(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer ts.Close()
-
-	cfg := &config.Config{
-		CheckInterval: 60,
-		Sections: []config.Section{
-			{Items: []config.Item{
-				{ID: "s0-i0", URL: ts.URL, StatusCheck: true},
-			}},
-		},
-	}
-	chk := checker.New(cfg)
-	chk.CheckNow()
-	time.Sleep(150 * time.Millisecond) // wait for async probe
-
-	s := &Server{cfg: cfg, checker: chk}
-	req := httptest.NewRequest(http.MethodGet, "/api/status/s0-i0", nil)
-	req.SetPathValue("id", "s0-i0")
-	w := httptest.NewRecorder()
-
-	s.handleStatusByID(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", w.Code)
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		t.Fatalf("read broadcast after check: %v", err)
 	}
 
-	var body checker.Status
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+	var statuses map[string]any
+	if err := json.Unmarshal(msg, &statuses); err != nil {
+		t.Fatalf("unmarshal broadcast: %v — body: %s", err, msg)
 	}
-	if body.ID != "s0-i0" {
-		t.Errorf("ID = %q, want %q", body.ID, "s0-i0")
+	if _, ok := statuses["s0-i0"]; !ok {
+		t.Error("broadcast did not include s0-i0 status")
 	}
 }
 

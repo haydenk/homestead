@@ -105,18 +105,18 @@ Configuration can be overridden at startup via command-line flags or environment
 | Flag | Environment variable | Default | Description |
 |---|---|---|---|
 | `-config` | `HOMESTEAD_CONFIG` | `config.toml` | Path to the TOML config file |
-| `-host` | `HOMESTEAD_HOST` | `127.0.0.1` | Bind address |
+| `-host` | `HOMESTEAD_HOST` | *(all interfaces)* | Bind address |
 | `-port` | `HOMESTEAD_PORT` | `8080` | Listen port |
 
-The legacy `PORT` environment variable is also accepted for compatibility with container platforms, but `HOMESTEAD_PORT` takes precedence if both are set.
+By default (no `-host` set), Homestead listens on all IPv4 and IPv6 interfaces simultaneously. The legacy `PORT` environment variable is also accepted for compatibility with container platforms, but `HOMESTEAD_PORT` takes precedence if both are set.
 
 ```bash
-# Bind to all interfaces on a custom port
-./homestead -host 0.0.0.0 -port 9000 -config /etc/homestead/config.toml
+# Default: listens on 0.0.0.0 and [::] (all interfaces, IPv4 + IPv6)
+./homestead -config /etc/homestead/config.toml
 
-# Using environment variables
-HOMESTEAD_HOST=0.0.0.0 HOMESTEAD_PORT=9000 ./homestead
+# Restrict to loopback only
+./homestead -host 127.0.0.1 -port 8080
 
-# IPv6
-./homestead -host :: -port 8080
+# Custom port via environment variable
+HOMESTEAD_PORT=9000 ./homestead
 ```

@@ -19,7 +19,7 @@ var webFS embed.FS
 
 func main() {
 	configPath := flag.String("config", "config.toml", "Path to TOML config file")
-	host := flag.String("host", "127.0.0.1", "Host/IP to bind (use :: for all IPv6, 0.0.0.0 for all IPv4)")
+	host := flag.String("host", "", "Host/IP to bind (default: all IPv4 and IPv6 interfaces; use 127.0.0.1 or ::1 to restrict to loopback)")
 	port := flag.String("port", "8080", "Port to listen on")
 	flag.Parse()
 
