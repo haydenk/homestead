@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.2.0] - 2026-03-07
+
+### Changed
+
+- **Release tagging** — Tags now use a `v` prefix (e.g. `v0.2.0`) to comply with Go module versioning requirements
+
 ## [0.1.1] - 2026-03-07
 
 ### Added
