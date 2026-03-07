@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
-## [0.2.0] - 2026-03-07
+## [v0.2.1] - 2026-03-07
+
+### Added
+
+- **Branch policy** — New `branch-policy.yml` workflow enforces gitflow naming conventions on pull requests; PRs targeting `master` must originate from `release/*` or `hotfix/*`, and PRs targeting `develop` must originate from `feature/*`, `bugfix/*`, `chore/*`, or `master`
+
+### Changed
+
+- **Release tagging** — Tags now use a `v` prefix (e.g. `v0.2.1`) to comply with Go module versioning requirements
+- **Back-merge** — Post-release back-merge from `master` into `develop` now opens a pull request via `gh pr create --auto` instead of pushing directly, respecting branch protection rules
+
+## [v0.2.0] - 2026-03-07
 
 ### Changed
 

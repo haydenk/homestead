@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -38,10 +39,24 @@ jobs:
           git tag "v${{ steps.version.outputs.version }}"
           git push origin "v${{ steps.version.outputs.version }}"
 
-      - name: Back-merge master into develop
+      - name: Create back-merge branch
         run: |
-          git fetch origin develop
-          git checkout develop
-          git merge --no-ff origin/master \
-            -m "chore: back-merge master into develop after ${{ github.event.pull_request.head.ref }}"
-          git push origin develop
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "chore/back-merge-${{ steps.version.outputs.version }}"
+          git push origin "chore/back-merge-${{ steps.version.outputs.version }}"
+
+      - name: Open back-merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base develop \
+            --head "chore/back-merge-${{ steps.version.outputs.version }}" \
+            --title "chore: back-merge master into develop after v${{ steps.version.outputs.version }}" \
+            --body "Automated back-merge of \`master\` into \`develop\` following the \`${{ github.event.pull_request.head.ref }}\` release." \
+            --label "chore" || true
+          gh pr merge "chore/back-merge-${{ steps.version.outputs.version }}" \
+            --auto \
+            --merge \
+            --delete-branch
