@@ -20,16 +20,10 @@ theme:
       scheme: slate
       primary: indigo
       accent: cyan
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: indigo
       accent: cyan
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
   features:
     - navigation.sections
     - navigation.top
