@@ -1,0 +1,78 @@
+site_name: Homestead
+site_url: https://haydenk.github.io/homestead
+site_description: A lightweight, self-hosted personal dashboard for monitoring and accessing your home lab services.
+site_author: haydenk
+
+repo_url: https://github.com/haydenk/homestead
+repo_name: haydenk/homestead
+edit_uri: edit/develop/docs/
+
+docs_dir: docs
+
+theme:
+  name: material
+  custom_dir: overrides
+  icon:
+    logo: material/home
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/haydenk/homestead
+      name: Homestead on GitHub
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: installation.md
+    - Configuration: configuration.md
+  - Guides:
+    - Reverse Proxy: reverse-proxy.md
+    - Icons: icons.md
+  - Reference:
+    - API: api.md
+    - Development: development.md

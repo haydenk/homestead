@@ -1,0 +1,115 @@
+{% extends "main.html" %}
+
+{% block tabs %}
+  {{ super() }}
+
+  <style>
+    .tx-hero {
+      margin: 0 0.8rem;
+      color: var(--md-primary-bg-color);
+      justify-content: center;
+    }
+
+    .tx-hero .md-button {
+      margin-top: 0.5rem;
+      margin-right: 0.5rem;
+      color: var(--md-primary-bg-color);
+    }
+
+    .tx-hero .md-button--primary {
+      background-color: var(--md-primary-bg-color);
+      color: hsla(280deg, 37%, 48%, 1);
+      border-color: var(--md-primary-bg-color);
+    }
+
+    .tx-hero .md-button:focus,
+    .tx-hero .md-button:hover {
+      background-color: var(--md-accent-fg-color);
+      color: var(--md-default-bg-color);
+      border-color: var(--md-accent-fg-color);
+    }
+
+    .tx-hero__content {
+      padding-bottom: 1rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .tx-hero h1 {
+      margin-bottom: 1rem;
+      color: currentColor;
+      font-weight: 700;
+    }
+
+    .tx-hero__subtitle {
+      font-size: 1.1rem;
+      max-width: 640px;
+      margin: 0 auto 1.5rem;
+      opacity: 0.85;
+    }
+
+    .tx-container {
+      padding-top: 1rem;
+      background: linear-gradient(
+        to bottom,
+        var(--md-primary-fg-color),
+        var(--md-primary-fg-color--dark) 99%,
+        var(--md-default-bg-color) 99%
+      );
+    }
+
+    @media screen and (min-width: 60em) {
+      .tx-hero {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .tx-hero__content {
+        max-width: 22rem;
+        margin-top: 3.5rem;
+        margin-bottom: 3.5rem;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .tx-hero__image {
+        order: 1;
+        margin-left: 2rem;
+      }
+    }
+
+    @media screen and (min-width: 76.25em) {
+      .tx-hero__image {
+        margin-left: 4rem;
+      }
+    }
+  </style>
+
+  <section class="tx-container">
+    <div class="md-grid md-typeset">
+      <div class="tx-hero">
+        <div class="tx-hero__content">
+          <h1 id="homestead">{{ page.meta.hero.title }}</h1>
+          <p class="tx-hero__subtitle">{{ page.meta.hero.subtitle }}</p>
+          <a
+            href="{{ page.meta.hero.install_button_link | url }}"
+            title="{{ page.meta.hero.install_button }}"
+            class="md-button md-button--primary"
+          >
+            {{ page.meta.hero.install_button }}
+          </a>
+          <a
+            href="{{ page.meta.hero.source_button_link }}"
+            title="{{ page.meta.hero.source_button }}"
+            class="md-button"
+            target="_blank"
+            rel="noopener"
+          >
+            {{ page.meta.hero.source_button }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
