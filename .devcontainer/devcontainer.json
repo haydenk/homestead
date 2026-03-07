@@ -6,7 +6,7 @@
       "configureZshAsDefaultShell": true
     },
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers-extras/features/mise:1": {}
+    "ghcr.io/devcontainers-extra/features/mise:1": {}
   },
   // Trust the project .mise.toml, add mise activate to shell rc files, then install all declared tools
   "postAttachCommand": "bash .devcontainer/setup.sh",
@@ -19,7 +19,10 @@
     "vscode": {
       "extensions": [
         "golang.go",
-        "tamasfe.even-better-toml"
+        "tamasfe.even-better-toml",
+        "ms-azuretools.vscode-docker",
+        "github.vscode-github-actions",
+        "eamodio.gitlens"
       ],
       "settings": {
         "go.toolsManagement.autoUpdate": true,
