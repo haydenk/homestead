@@ -17,7 +17,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
     -o homestead .
 
 # ── Final stage ───────────────────────────────────────────────────────────────
-FROM alpine:3.19
+FROM alpine:3.23
 
 # ca-certificates: needed for HTTPS health checks
 # tzdata: correct timestamps in logs
