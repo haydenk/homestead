@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"homestead/internal/checker"
-	"homestead/internal/config"
+	"github.com/haydenk/homestead/internal/checker"
+	"github.com/haydenk/homestead/internal/config"
 )
 
 // Server holds all runtime state for the HTTP server.

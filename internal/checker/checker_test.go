@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"homestead/internal/config"
+	"github.com/haydenk/homestead/internal/config"
 )
 
 // makeConfig builds a minimal Config containing the given items in a single section.

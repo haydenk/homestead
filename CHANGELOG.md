@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [v0.3.0] - 2026-03-07
+
+### Added
+
+- **Manual release dispatch** — `release.yml` now supports `workflow_dispatch` with a required `tag` input and an optional `dry_run` flag that builds and tests without publishing to GitHub Releases or GHCR
+
+### Fixed
+
+- **Go module path** — Corrected module declaration from `homestead` to `github.com/haydenk/homestead` in `go.mod` and all internal import paths, resolving Go proxy resolution errors
+
 ## [v0.2.2] - 2026-03-07
 
 ### Fixed
