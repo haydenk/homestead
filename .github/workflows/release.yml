@@ -92,7 +92,7 @@ jobs:
           notes=$(awk -v ver="${{ github.ref_name }}" '
             /^## \[/ { if (found) exit; if (index($0, "[" ver "]")) found=1; next }
             found { print }
-          ' CHANGELOG.md | sed '/./,$!d' | sed -e :a -e '/^\s*$/{$d;N;ba}')
+          ' CHANGELOG.md | awk 'NF{found=NR} {lines[NR]=$0} END{for(i=1;i<=found;i++) print lines[i]}')
           echo "notes<<EOF" >> "$GITHUB_OUTPUT"
           echo "$notes" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
