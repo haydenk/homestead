@@ -95,6 +95,76 @@ Tasks are defined in `.mise/tasks/` and can be run with `mise run <task>`.
 
 ---
 
+## Branch model
+
+This project follows [git flow](https://nvie.com/posts/a-successful-git-branching-model/). The two long-lived branches are:
+
+| Branch | Purpose |
+|---|---|
+| `master` | Always reflects the latest production release. Protected — no direct pushes. |
+| `develop` | Integration branch for completed features. CI must pass before merge. |
+
+### Feature development
+
+```bash
+# 1. Branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-feature
+
+# 2. Work, commit, push
+git push -u origin feature/my-feature
+
+# 3. Open a PR → develop
+#    CI must pass. Merge when ready.
+```
+
+### Release procedure
+
+```bash
+# 1. Cut a release branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b release/0.2.0
+
+# 2. Update CHANGELOG.md — move [Unreleased] items under ## [0.2.0] - YYYY-MM-DD
+# 3. Commit and push
+git add CHANGELOG.md
+git commit -m "chore: prepare release 0.2.0"
+git push -u origin release/0.2.0
+
+# 4. Open a PR: release/0.2.0 → master
+#    CI must pass. Merging triggers the automated release pipeline:
+#      - Tags master with 0.2.0
+#      - Builds binaries, packages, and Docker image
+#      - Creates a GitHub Release with the changelog entry
+#      - Back-merges master into develop automatically
+```
+
+### Hotfix procedure
+
+Use hotfixes for urgent fixes to production that cannot wait for the next planned release.
+
+```bash
+# 1. Branch from master (not develop)
+git checkout master
+git pull origin master
+git checkout -b hotfix/0.1.2
+
+# 2. Apply the fix, update CHANGELOG.md
+git add .
+git commit -m "fix: description of the fix"
+git push -u origin hotfix/0.1.2
+
+# 3. Open a PR: hotfix/0.1.2 → master
+#    Merging triggers the same automated pipeline as a release:
+#      - Tags master with 0.1.2
+#      - Builds and publishes all artifacts
+#      - Back-merges master into develop automatically
+```
+
+---
+
 ## Architecture
 
 ### Config loading (`internal/config`)
