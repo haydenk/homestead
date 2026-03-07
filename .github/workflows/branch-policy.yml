@@ -1,0 +1,33 @@
+name: Branch Policy
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  validate-branch:
+    name: Validate Branch Policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch naming policy
+        run: |
+          TARGET="${{ github.base_ref }}"
+          SOURCE="${{ github.head_ref }}"
+
+          if [ "$TARGET" = "master" ]; then
+            if [[ "$SOURCE" != release/* && "$SOURCE" != hotfix/* ]]; then
+              echo "PRs to master must come from release/* or hotfix/* branches (got: $SOURCE)"
+              exit 1
+            fi
+          fi
+
+          if [ "$TARGET" = "develop" ]; then
+            if [[ "$SOURCE" != feature/* && "$SOURCE" != bugfix/* && "$SOURCE" != "master" ]]; then
+              echo "PRs to develop must come from feature/*, bugfix/*, or master branches (got: $SOURCE)"
+              exit 1
+            fi
+          fi
+
+          echo "Branch policy check passed ($SOURCE -> $TARGET)"
