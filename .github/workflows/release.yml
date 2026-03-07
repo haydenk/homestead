@@ -4,9 +4,21 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v0.2.2)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Dry run — build and test without publishing'
+        required: false
+        type: boolean
+        default: false
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   # ── 1. Build & test ──────────────────────────────────────────────────────────
@@ -17,6 +29,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
 
       - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
 
@@ -47,6 +60,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
 
       - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3.6.3
 
@@ -86,10 +100,10 @@ jobs:
           merge-multiple: true
           path: dist/
 
-      - name: Extract changelog for ${{ github.ref_name }}
+      - name: Extract changelog for ${{ env.RELEASE_TAG }}
         id: changelog
         run: |
-          notes=$(awk -v ver="${{ github.ref_name }}" '
+          notes=$(awk -v ver="${{ env.RELEASE_TAG }}" '
             /^## \[/ { if (found) exit; if (index($0, "[" ver "]")) found=1; next }
             found { print }
           ' CHANGELOG.md | awk 'NF{found=NR} {lines[NR]=$0} END{for(i=1;i<=found;i++) print lines[i]}')
@@ -98,7 +112,9 @@ jobs:
           echo "EOF" >> "$GITHUB_OUTPUT"
 
       - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        if: ${{ !inputs.dry_run }}
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
           files: dist/**
           body: ${{ steps.changelog.outputs.notes }}
 
@@ -124,9 +140,9 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}},value=${{ github.ref_name }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ github.ref_name }}
-            type=semver,pattern={{major}},value=${{ github.ref_name }}
+            type=semver,pattern={{version}},value=${{ env.RELEASE_TAG }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ env.RELEASE_TAG }}
+            type=semver,pattern={{major}},value=${{ env.RELEASE_TAG }}
             type=raw,value=latest
 
       - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
@@ -136,9 +152,9 @@ jobs:
       - uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
-          push: true
           platforms: linux/amd64,linux/arm64
-          build-args: VERSION=${{ github.ref_name }}
+          build-args: VERSION=${{ env.RELEASE_TAG }}
+          push: ${{ !inputs.dry_run }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
