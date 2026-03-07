@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Run with go run (no build step, for development)"
-#MISE arg="[config]"
+#MISE arg "[config]" help="Path to config file" default="config.toml"
 set -euo pipefail
 
 CONFIG="${1:-$MISE_PROJECT_ROOT/config.toml}"
