@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [v0.2.2] - 2026-03-07
+
+### Fixed
+
+- **GitFlow release workflow** — Tag creation is now idempotent; re-running the workflow no longer fails if the tag already exists
+
 ## [v0.2.1] - 2026-03-07
 
 ### Added
