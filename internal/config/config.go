@@ -9,34 +9,34 @@ import (
 
 // Config is the root configuration structure.
 type Config struct {
-	Title         string    `toml:"title"          json:"title"`
-	Subtitle      string    `toml:"subtitle"       json:"subtitle"`
-	Logo          string    `toml:"logo"           json:"logo"`
-	Theme         string    `toml:"theme"          json:"theme"`         // dark | light
-	Columns       int       `toml:"columns"        json:"columns"`       // 1–6
-	CheckInterval int       `toml:"check_interval" json:"checkInterval"` // seconds
-	Footer        string    `toml:"footer"         json:"footer"`
-	Sections      []Section `toml:"sections"       json:"sections"`
+	Title         string    `toml:"title"`
+	Subtitle      string    `toml:"subtitle"`
+	Logo          string    `toml:"logo"`
+	Theme         string    `toml:"theme"`          // dark | light
+	Columns       int       `toml:"columns"`        // 1–6
+	CheckInterval int       `toml:"check_interval"` // seconds
+	Footer        string    `toml:"footer"`
+	Sections      []Section `toml:"sections"`
 }
 
 // Section groups related items on the dashboard.
 type Section struct {
-	Name  string `toml:"name"  json:"name"`
-	Icon  string `toml:"icon"  json:"icon"`
-	Items []Item `toml:"items" json:"items"`
+	Name  string `toml:"name"`
+	Icon  string `toml:"icon"`
+	Items []Item `toml:"items"`
 }
 
 // Item represents a single dashboard card/link.
 type Item struct {
-	ID          string   `toml:"-"            json:"id"`
-	Title       string   `toml:"title"        json:"title"`
-	URL         string   `toml:"url"          json:"url"`
-	Description string   `toml:"description"  json:"description"`
-	Icon        string   `toml:"icon"         json:"icon"`
-	Tags        []string `toml:"tags"         json:"tags"`
-	Target      string   `toml:"target"       json:"target"` // _blank | _self
-	StatusCheck bool     `toml:"status_check" json:"statusCheck"`
-	Color       string   `toml:"color"        json:"color"` // optional accent hex
+	ID          string   `toml:"-"`
+	Title       string   `toml:"title"`
+	URL         string   `toml:"url"`
+	Description string   `toml:"description"`
+	Icon        string   `toml:"icon"`
+	Tags        []string `toml:"tags"`
+	Target      string   `toml:"target"`       // _blank | _self
+	StatusCheck bool     `toml:"status_check"`
+	Color       string   `toml:"color"` // optional accent hex
 }
 
 // Load reads and parses the TOML config file at path.

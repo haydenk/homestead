@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Homestead</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
+  <title>{{.Config.Title}}</title>
+  <link rel="icon" href="{{faviconURL .Config.Logo}}" />
+  <style>:root { --columns: {{.Config.Columns}}; }</style>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
@@ -14,10 +15,10 @@
     <div class="header-inner">
 
       <div class="brand">
-        <span id="site-logo" class="brand-logo" aria-hidden="true">🏠</span>
+        <span class="brand-logo" aria-hidden="true">{{.Config.Logo}}</span>
         <div>
-          <h1 id="site-title" class="brand-title">Homestead</h1>
-          <p  id="site-subtitle" class="brand-subtitle"></p>
+          <h1 class="brand-title">{{.Config.Title}}</h1>
+          {{if .Config.Subtitle}}<p class="brand-subtitle">{{.Config.Subtitle}}</p>{{end}}
         </div>
       </div>
 
@@ -46,7 +47,45 @@
 
   <!-- ── Main content ───────────────────────────────────────────────── -->
   <main class="main">
-    <div id="sections"></div>
+    <div id="sections">
+      {{range .Config.Sections}}
+      <section class="section" data-section="{{.Name}}">
+        <div class="section-header">
+          {{if .Icon}}<span class="section-icon" aria-hidden="true">{{.Icon}}</span>{{end}}
+          <span class="section-name">{{.Name}}</span>
+          <span class="section-count" aria-label="{{len .Items}} items">{{len .Items}}</span>
+        </div>
+        <div class="cards-grid">
+          {{range .Items}}{{$status := index $.Statuses .ID}}
+          <a class="card"
+             href="{{.URL}}"
+             target="{{.Target}}"
+             rel="noopener noreferrer"
+             data-id="{{.ID}}"
+             data-title="{{lower .Title}}"
+             data-desc="{{lower .Description}}"
+             data-tags="{{joinTags .Tags | lower}}"
+             {{accentStyle .Color}}
+             title="{{.Title}}{{if .URL}} – {{.URL}}{{end}}">
+            <div class="card-top">
+              <div class="card-icon">{{iconHTML .Icon}}</div>
+              {{if .StatusCheck}}
+              <span class="status-dot {{dotClass $status}}"
+                    data-id="{{.ID}}"
+                    data-tooltip="{{dotLabel $status}}"
+                    role="status"
+                    aria-label="status {{dotClass $status}}"></span>
+              {{end}}
+            </div>
+            <div class="card-title">{{.Title}}</div>
+            {{if .Description}}<p class="card-desc" title="{{.Description}}">{{.Description}}</p>{{end}}
+            {{if .Tags}}<div class="card-tags">{{range .Tags}}<span class="tag">{{.}}</span>{{end}}</div>{{end}}
+          </a>
+          {{end}}
+        </div>
+      </section>
+      {{end}}
+    </div>
 
     <!-- Empty search state -->
     <div id="empty-state" class="empty-state" hidden>
@@ -55,24 +94,15 @@
       </svg>
       <p>No results for "<span id="empty-query"></span>"</p>
     </div>
-
-    <!-- Loading state -->
-    <div id="loading-state" class="loading-state">
-      <div class="spinner"></div>
-      <p>Loading dashboard…</p>
-    </div>
   </main>
 
   <!-- ── Footer ─────────────────────────────────────────────────────── -->
   <footer class="footer">
-    <span id="footer-text"></span>
-    <span class="footer-sep" aria-hidden="true">·</span>
+    {{if .Config.Footer}}<span>{{.Config.Footer}}</span><span class="footer-sep" aria-hidden="true">·</span>{{end}}
     <span class="footer-brand">Homestead</span>
   </footer>
 
-  <!-- ── Toast notifications ────────────────────────────────────────── -->
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-
+  <script>const CHECK_INTERVAL = {{.Config.CheckInterval}} * 1000;</script>
   <script src="/app.js"></script>
 </body>
 </html>

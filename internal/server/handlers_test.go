@@ -2,11 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"homestead/internal/checker"
@@ -21,6 +23,22 @@ func newTestServer(cfg *config.Config, configPath string) *Server {
 		configPath: configPath,
 		checker:    checker.New(cfg),
 	}
+}
+
+// newIntegrationServer builds a full Server with a fake filesystem and returns
+// a running httptest.Server. The caller need not close it — t.Cleanup handles it.
+func newIntegrationServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	webFS := fstest.MapFS{
+		"web/index.html": &fstest.MapFile{Data: []byte(`<html><body>INDEX</body></html>`)},
+		"web/style.css":  &fstest.MapFile{Data: []byte(`body { color: red; }`)},
+		"web/app.js":     &fstest.MapFile{Data: []byte(`"use strict";`)},
+	}
+	cfg := &config.Config{CheckInterval: 30}
+	srv := New(cfg, "", checker.New(cfg), "127.0.0.1", "0", webFS)
+	ts := httptest.NewServer(srv.mux)
+	t.Cleanup(ts.Close)
+	return ts
 }
 
 // --- GET /api/health ---
@@ -71,63 +89,78 @@ func TestHandleHealth_TimeIsRFC3339(t *testing.T) {
 	}
 }
 
-// --- GET /api/config ---
+// --- GET / and static files ---
 
-func TestHandleConfig_ReturnsConfigAsJSON(t *testing.T) {
-	cfg := &config.Config{
-		Title:   "Test Dashboard",
-		Theme:   "dark",
-		Columns: 4,
+// TestRoute_RootServesHTML verifies GET / returns the HTML index page.
+func TestRoute_RootServesHTML(t *testing.T) {
+	ts := newIntegrationServer(t)
+	resp, err := ts.Client().Get(ts.URL + "/")
+	if err != nil {
+		t.Fatal(err)
 	}
-	s := newTestServer(cfg, "")
-	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
-	w := httptest.NewRecorder()
+	defer resp.Body.Close()
 
-	s.handleConfig(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", w.Code)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status = %d, want 200", resp.StatusCode)
 	}
-	if ct := w.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
-		t.Errorf("Content-Type = %q, want application/json", ct)
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type = %q, want text/html", ct)
 	}
-	if cc := w.Header().Get("Cache-Control"); cc != "no-cache" {
-		t.Errorf("Cache-Control = %q, want no-cache", cc)
-	}
-
-	var body config.Config
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if body.Title != "Test Dashboard" {
-		t.Errorf("Title = %q, want %q", body.Title, "Test Dashboard")
-	}
-	if body.Columns != 4 {
-		t.Errorf("Columns = %d, want 4", body.Columns)
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(body), "INDEX") {
+		t.Error("response body does not contain expected index content")
 	}
 }
 
-func TestHandleConfig_IncludesSections(t *testing.T) {
-	cfg := &config.Config{
-		Sections: []config.Section{
-			{Name: "Services", Items: []config.Item{{Title: "Router", URL: "http://192.168.1.1"}}},
-		},
+// TestRoute_StyleCSSNotInterceptedByIndex verifies that GET /style.css is served
+// as a static file and not swallowed by the index handler (regression for GET /{$} fix).
+func TestRoute_StyleCSSNotInterceptedByIndex(t *testing.T) {
+	ts := newIntegrationServer(t)
+	resp, err := ts.Client().Get(ts.URL + "/style.css")
+	if err != nil {
+		t.Fatal(err)
 	}
-	s := newTestServer(cfg, "")
-	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
-	w := httptest.NewRecorder()
+	defer resp.Body.Close()
 
-	s.handleConfig(w, req)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status = %d, want 200", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type = %q: style.css was intercepted by the index handler", ct)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if strings.Contains(string(body), "INDEX") {
+		t.Error("style.css response contains index HTML — static file routing is broken")
+	}
+}
 
-	var body config.Config
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+// TestRoute_AppJSNotInterceptedByIndex verifies that GET /app.js is served
+// as a static file and not swallowed by the index handler.
+func TestRoute_AppJSNotInterceptedByIndex(t *testing.T) {
+	ts := newIntegrationServer(t)
+	resp, err := ts.Client().Get(ts.URL + "/app.js")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if len(body.Sections) != 1 {
-		t.Fatalf("Sections len = %d, want 1", len(body.Sections))
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("status = %d, want 200", resp.StatusCode)
 	}
-	if body.Sections[0].Name != "Services" {
-		t.Errorf("Section name = %q, want %q", body.Sections[0].Name, "Services")
+	if ct := resp.Header.Get("Content-Type"); strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type = %q: app.js was intercepted by the index handler", ct)
+	}
+}
+
+// TestStyleCSS_EmptyStateHiddenOverride verifies the CSS fix that prevents
+// display:flex on .empty-state from overriding the HTML hidden attribute.
+func TestStyleCSS_EmptyStateHiddenOverride(t *testing.T) {
+	css, err := os.ReadFile("../../web/style.css")
+	if err != nil {
+		t.Fatalf("read style.css: %v", err)
+	}
+	if !strings.Contains(string(css), ".empty-state[hidden]") {
+		t.Error("style.css is missing .empty-state[hidden] rule — empty state will show when search is blank")
 	}
 }
 

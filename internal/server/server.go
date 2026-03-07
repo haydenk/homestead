@@ -1,7 +1,7 @@
 package server
 
 import (
-	"embed"
+	"html/template"
 	"io/fs"
 	"log"
 	"net"
@@ -19,12 +19,13 @@ type Server struct {
 	checker    *checker.Checker
 	host       string
 	port       string
-	webFS      embed.FS
+	webFS      fs.FS
+	tmpl       *template.Template
 	mux        *http.ServeMux
 }
 
 // New creates a configured Server.
-func New(cfg *config.Config, configPath string, chk *checker.Checker, host, port string, webFS embed.FS) *Server {
+func New(cfg *config.Config, configPath string, chk *checker.Checker, host, port string, webFS fs.FS) *Server {
 	s := &Server{
 		cfg:        cfg,
 		configPath: configPath,
@@ -32,6 +33,7 @@ func New(cfg *config.Config, configPath string, chk *checker.Checker, host, port
 		host:       host,
 		port:       port,
 		webFS:      webFS,
+		tmpl:       newTemplate(webFS),
 		mux:        http.NewServeMux(),
 	}
 	s.registerRoutes()
@@ -55,11 +57,16 @@ func (s *Server) Run() error {
 
 func (s *Server) registerRoutes() {
 	// --- API ---
-	s.mux.HandleFunc("GET /api/config", s.handleConfig)
 	s.mux.HandleFunc("GET /api/status", s.handleStatus)
 	s.mux.HandleFunc("GET /api/status/{id}", s.handleStatusByID)
 	s.mux.HandleFunc("POST /api/reload", s.handleReload)
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
+
+	// --- Dashboard (server-side rendered) ---
+	s.mux.HandleFunc("GET /{$}", s.handleIndex)
+	s.mux.HandleFunc("GET /index.html", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+	})
 
 	// --- Static files (embedded) ---
 	sub, err := fs.Sub(s.webFS, "web")
