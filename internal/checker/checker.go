@@ -23,19 +23,21 @@ type Status struct {
 
 // Checker runs background health checks for all configured items.
 type Checker struct {
-	cfg     *config.Config
-	mu      sync.RWMutex
-	results map[string]*Status
-	stopCh  chan struct{}
-	client  *http.Client
+	cfg      *config.Config
+	mu       sync.RWMutex
+	results  map[string]*Status
+	stopCh   chan struct{}
+	notifyCh chan struct{}
+	client   *http.Client
 }
 
 // New creates a Checker. Call Start() to begin background checks.
 func New(cfg *config.Config) *Checker {
 	return &Checker{
-		cfg:     cfg,
-		results: make(map[string]*Status),
-		stopCh:  make(chan struct{}),
+		cfg:      cfg,
+		results:  make(map[string]*Status),
+		stopCh:   make(chan struct{}),
+		notifyCh: make(chan struct{}, 1),
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
@@ -75,6 +77,11 @@ func (c *Checker) Start() {
 // Stop halts background checks.
 func (c *Checker) Stop() {
 	close(c.stopCh)
+}
+
+// Notify returns a channel that receives a signal after each completed check round.
+func (c *Checker) Notify() <-chan struct{} {
+	return c.notifyCh
 }
 
 // CheckNow triggers an immediate check of all items (non-blocking).
@@ -142,6 +149,11 @@ func (c *Checker) checkAll() {
 		}
 	}
 	wg.Wait()
+	// Signal listeners (non-blocking; drop if previous signal not yet consumed).
+	select {
+	case c.notifyCh <- struct{}{}:
+	default:
+	}
 }
 
 func (c *Checker) probe(item config.Item) *Status {

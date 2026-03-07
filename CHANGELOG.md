@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [0.1.0] - 2026-03-06
+
+### Added
+
+- **WebSocket status updates** — New `GET /ws` endpoint pushes health check results to all connected clients in real time; clients receive an immediate snapshot on connect and a fresh push after each check round
+- **Dual-stack listening** — Server now binds to both IPv4 (`0.0.0.0`) and IPv6 (`[::]`) by default, with graceful fallback if either family is unavailable
+
+### Changed
+
+- **Default bind address** — Changed from `127.0.0.1` (loopback only) to all interfaces; pass `-host 127.0.0.1` to restore the previous behaviour
+- **Status delivery** — The dashboard UI now receives status updates via WebSocket instead of HTTP polling, reducing latency and eliminating periodic requests
+- **Static file routing** — Index route changed to an exact match (`GET /{$}`) so requests for static assets (`/style.css`, `/app.js`) are served correctly by the file handler
+
+### Removed
+
+- **`GET /api/status`** — Replaced by the WebSocket endpoint
+- **`GET /api/status/{id}`** — Replaced by the WebSocket endpoint
+- **`GET /api/config`** — Removed
+
+### Fixed
+
+- **Empty state always visible** — Added `.empty-state[hidden] { display: none }` to prevent `display: flex` from overriding the `hidden` attribute when the search box is empty
+
 ## [0.0.1] - 2026-02-28
 
 ### Added

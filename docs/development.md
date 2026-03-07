@@ -19,8 +19,8 @@ mise install
 # Copy the example config (once)
 cp config.example.toml config.toml
 
-# Run locally
-go run . -config config.toml -host 0.0.0.0
+# Run locally (listens on all IPv4 + IPv6 interfaces by default)
+go run . -config config.toml
 
 # Build a binary
 go build -o homestead .
@@ -32,7 +32,7 @@ go test ./...
 go fmt ./...
 ```
 
-The server binds to `http://0.0.0.0:8080` by default when using the command above. Adjust with `-host` and `-port` as needed.
+The server listens on all IPv4 and IPv6 interfaces (`0.0.0.0` and `[::]`) on port `8080` by default. Use `-host` to restrict to a specific address and `-port` to change the port.
 
 ---
 
@@ -58,8 +58,9 @@ A VS Code dev container is included in `.devcontainer/` with Go, mise, and the T
 │   │   ├── checker.go           # Background health check engine
 │   │   └── checker_test.go
 │   └── server/
-│       ├── server.go            # HTTP server setup and route registration
-│       ├── handlers.go          # API handler implementations
+│       ├── server.go            # HTTP server setup, routing, dual-stack listener
+│       ├── hub.go               # WebSocket connection hub and broadcaster
+│       ├── handlers.go          # HTTP and WebSocket handler implementations
 │       └── handlers_test.go
 ├── web/
 │   ├── index.html               # UI template (served as embedded FS)
@@ -102,11 +103,15 @@ Tasks are defined in `.mise/tasks/` and can be run with `mise run <task>`.
 
 ### Health checker (`internal/checker`)
 
-`Checker` runs a goroutine-per-item health check on a configurable interval. Results are stored in a `map[string]*Status` guarded by a `sync.RWMutex`. Checks use `HEAD` with a `GET` fallback and accept self-signed TLS certificates. `UpdateConfig` replaces the config and prunes results for items that no longer exist.
+`Checker` runs a goroutine-per-item health check on a configurable interval. Results are stored in a `map[string]*Status` guarded by a `sync.RWMutex`. Checks use `HEAD` with a `GET` fallback and accept self-signed TLS certificates. `UpdateConfig` replaces the config and prunes results for items that no longer exist. After each check round, a signal is sent on the `Notify()` channel so the server can push updates to WebSocket clients.
 
 ### HTTP server (`internal/server`)
 
-`Server` wraps the Go standard library `net/http` server. Routes are registered on a `http.ServeMux` using the Go 1.22 method+path pattern syntax (e.g. `GET /api/config`). The web UI is served from an embedded filesystem (`//go:embed web`), so the binary is fully self-contained.
+`Server` wraps the Go standard library `net/http` server. Routes are registered on a `http.ServeMux` using the Go 1.22 method+path pattern syntax. The web UI is served from an embedded filesystem (`//go:embed web`), so the binary is fully self-contained.
+
+A `hub` manages all active WebSocket connections. A `runHub` goroutine subscribes to `checker.Notify()` and broadcasts the latest status snapshot to every connected client after each check round. New clients receive an immediate snapshot on connect so there is no wait for the next tick.
+
+When no `-host` flag is set, `Run()` opens two listeners — `tcp4` on `0.0.0.0` and `tcp6` on `[::]` — so the server accepts both IPv4 and IPv6 connections on all platforms regardless of OS dual-stack settings.
 
 ---
 

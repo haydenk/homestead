@@ -362,6 +362,53 @@ func TestCheckAll_MultipleSections(t *testing.T) {
 	}
 }
 
+// --- Notify ---
+
+func TestNotify_FiresAfterCheckAll(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	cfg := makeConfig(config.Item{ID: "s0-i0", URL: ts.URL, StatusCheck: true})
+	c := New(cfg)
+
+	notify := c.Notify()
+	c.checkAll()
+
+	select {
+	case <-notify:
+		// passed
+	case <-time.After(500 * time.Millisecond):
+		t.Error("Notify channel did not fire after checkAll")
+	}
+}
+
+func TestNotify_DoesNotBlockWhenUnread(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	cfg := makeConfig(config.Item{ID: "s0-i0", URL: ts.URL, StatusCheck: true})
+	c := New(cfg)
+
+	// Call checkAll twice without reading from Notify — must not block.
+	done := make(chan struct{})
+	go func() {
+		c.checkAll()
+		c.checkAll()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// passed
+	case <-time.After(2 * time.Second):
+		t.Error("checkAll blocked on unread Notify channel")
+	}
+}
+
 // --- Start / Stop ---
 
 func TestStartStop_DoesNotPanic(t *testing.T) {

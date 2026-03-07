@@ -1,8 +1,6 @@
 # API Reference
 
-Homestead exposes a small REST API for reading configuration, querying health check statuses, and triggering live reloads.
-
-All endpoints return `application/json` unless otherwise noted.
+Homestead exposes a small API for querying health check statuses in real-time and triggering live reloads.
 
 ---
 
@@ -11,58 +9,21 @@ All endpoints return `application/json` unless otherwise noted.
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/` | Web UI |
-| `GET` | `/api/config` | Full configuration as JSON |
-| `GET` | `/api/status` | Health check statuses for all items |
-| `GET` | `/api/status/{id}` | Health check status for a single item |
+| `WS` | `/ws` | Real-time status updates (WebSocket) |
 | `POST` | `/api/reload` | Reload config from disk and restart checks |
 | `GET` | `/api/health` | Liveness probe |
 
 ---
 
-## GET /api/config
+## WS /ws
 
-Returns the currently loaded configuration as JSON. Useful for debugging or building integrations.
+Upgrades to a WebSocket connection and streams health check status updates in real time.
 
-**Response**
+- On connect, the server immediately sends the current snapshot of all statuses.
+- After each check round completes, the server pushes an updated snapshot to all connected clients.
+- The client does not need to send any messages; the connection is server-to-client only.
 
-```json
-{
-  "title": "Homestead",
-  "subtitle": "My self-hosted dashboard",
-  "logo": "🏠",
-  "theme": "dark",
-  "columns": 4,
-  "checkInterval": 30,
-  "footer": "Running on Proxmox",
-  "sections": [
-    {
-      "name": "Media",
-      "icon": "🎬",
-      "items": [
-        {
-          "id": "s0-i0",
-          "title": "Jellyfin",
-          "url": "https://jellyfin.lan",
-          "description": "Open source media server",
-          "icon": "📺",
-          "tags": ["media"],
-          "target": "_blank",
-          "statusCheck": true,
-          "color": "#00a4dc"
-        }
-      ]
-    }
-  ]
-}
-```
-
----
-
-## GET /api/status
-
-Returns a map of health check statuses keyed by item ID. Only items with `status_check = true` appear here.
-
-**Response**
+**Message format** — JSON object keyed by item ID, same structure as the status object below.
 
 ```json
 {
@@ -72,8 +33,7 @@ Returns a map of health check statuses keyed by item ID. Only items with `status
     "up": true,
     "statusCode": 200,
     "responseTimeMs": 145,
-    "lastChecked": "2024-02-24T16:30:00Z",
-    "error": ""
+    "lastChecked": "2024-02-24T16:30:00Z"
   },
   "s0-i1": {
     "id": "s0-i1",
@@ -97,27 +57,27 @@ Returns a map of health check statuses keyed by item ID. Only items with `status
 | `statusCode` | integer | HTTP status code returned, or `0` on connection failure |
 | `responseTimeMs` | integer | Round-trip time in milliseconds |
 | `lastChecked` | string | RFC 3339 timestamp of the last check |
-| `error` | string | Error message if the request failed; empty string on success |
+| `error` | string | Error message if the request failed; omitted on success |
 
----
+### Example (browser)
 
-## GET /api/status/{id}
+```js
+const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WebSocket(`${proto}//${location.host}/ws`);
 
-Returns the health check status for a single item. The `id` corresponds to the `id` field in `/api/config` (e.g. `s0-i0`).
+ws.onmessage = (e) => {
+  const statuses = JSON.parse(e.data);
+  console.log(statuses);
+};
 
-**Response** — same structure as a single entry from `/api/status`.
-
-**404 Not Found** — returned if no item with that ID exists or if the item does not have `status_check = true`.
-
-```json
-{"error": "not found"}
+ws.onclose = () => setTimeout(connect, 3000); // auto-reconnect
 ```
 
 ---
 
 ## POST /api/reload
 
-Re-reads the configuration file from disk, applies the new configuration, clears stale health check results, and triggers an immediate re-check of all items.
+Re-reads the configuration file from disk, applies the new configuration, clears stale health check results, and triggers an immediate re-check of all items. Connected WebSocket clients receive the updated statuses automatically.
 
 No request body is required.
 
@@ -161,4 +121,4 @@ Item IDs are assigned at load time based on the position of the item in the conf
 - Indices are zero-based
 - Example: the first item in the second section is `s1-i0`
 
-IDs are stable as long as the order of sections and items in the config file does not change. After a `/api/reload`, IDs are recalculated, so any externally cached IDs should be refreshed from `/api/config`.
+IDs are stable as long as the order of sections and items in the config file does not change. After a `/api/reload`, IDs are recalculated and all connected WebSocket clients receive a fresh snapshot.

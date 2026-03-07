@@ -472,6 +472,7 @@ mark {
 
 /* ── Shared states ───────────────────────────────────────────────────────── */
 .loading-state,
+.empty-state[hidden] { display: none; }
 .empty-state {
   display: flex;
   flex-direction: column;

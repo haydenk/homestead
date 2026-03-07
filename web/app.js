@@ -1,241 +1,97 @@
 "use strict";
 
-// ── State ────────────────────────────────────────────────────────────────────
-let config   = {};
-let statuses = {};
-
-const state = { query: "" };
-
-// ── Selectors ────────────────────────────────────────────────────────────────
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => [...document.querySelectorAll(sel)];
-
-const el = {
-  title:      () => $("#site-title"),
-  subtitle:   () => $("#site-subtitle"),
-  logo:       () => $("#site-logo"),
-  footer:     () => $("#footer-text"),
-  sections:   () => $("#sections"),
-  loading:    () => $("#loading-state"),
-  empty:      () => $("#empty-state"),
-  emptyQuery: () => $("#empty-query"),
-  search:     () => $("#search"),
-  toast:      () => $("#toast"),
-  btnRefresh: () => $("#btn-refresh"),
-};
-
 // ── Init ─────────────────────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   bindEvents();
-
-  try {
-    await loadConfig();
-    renderDashboard();
-    await loadStatus();
-    startPolling();
-  } catch (err) {
-    console.error("Init error:", err);
-    showToast("⚠ Could not load dashboard config.", 5000);
-  } finally {
-    el.loading().hidden = true;
-  }
+  connectWS();
 });
 
-// ── Data fetching ─────────────────────────────────────────────────────────────
-async function loadConfig() {
-  const res = await fetch("/api/config");
-  if (!res.ok) throw new Error(`config fetch: ${res.status}`);
-  config = await res.json();
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+let _ws = null;
+let _wsReconnectTimer = null;
+
+function connectWS() {
+  clearTimeout(_wsReconnectTimer);
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const ws = (_ws = new WebSocket(`${proto}//${location.host}/ws`));
+
+  ws.onmessage = (e) => {
+    try {
+      updateStatusDots(JSON.parse(e.data));
+    } catch (_) {}
+  };
+
+  ws.onclose = () => {
+    if (ws === _ws) _wsReconnectTimer = setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = () => ws.close();
 }
 
-async function loadStatus() {
-  try {
-    const res = await fetch("/api/status");
-    if (!res.ok) return;
-    statuses = await res.json();
-    updateStatusDots();
-  } catch (e) {
-    console.warn("status fetch:", e);
-  }
-}
-
-// ── Render ────────────────────────────────────────────────────────────────────
-function renderDashboard() {
-  document.title = config.title || "Homestead";
-  el.title().textContent    = config.title    || "Homestead";
-  el.subtitle().textContent = config.subtitle || "";
-  el.logo().textContent     = config.logo     || "🏠";
-  el.footer().textContent   = config.footer   || "";
-
-  const cols = Math.min(Math.max(config.columns || 4, 1), 6);
-  document.documentElement.style.setProperty("--columns", cols);
-
-  el.sections().innerHTML = (config.sections || []).map(renderSection).join("");
-}
-
-function renderSection(section) {
-  const items = section.items || [];
-  return `
-    <section class="section" data-section="${esc(section.name)}">
-      <div class="section-header">
-        ${section.icon ? `<span class="section-icon" aria-hidden="true">${esc(section.icon)}</span>` : ""}
-        <span class="section-name">${esc(section.name)}</span>
-        <span class="section-count" aria-label="${items.length} items">${items.length}</span>
-      </div>
-      <div class="cards-grid">
-        ${items.map(renderCard).join("")}
-      </div>
-    </section>`;
-}
-
-function renderCard(item) {
-  const accentStyle = item.color ? `--card-accent:${esc(item.color)};` : "";
-  const iconHTML    = buildIconHTML(item.icon);
-  const statusHTML  = item.statusCheck
-    ? `<span class="status-dot unknown" data-id="${esc(item.id)}" data-tooltip="Checking…" role="status" aria-label="status unknown"></span>`
-    : "";
-  const descHTML = item.description
-    ? `<p class="card-desc" title="${esc(item.description)}">${esc(item.description)}</p>`
-    : "";
-  const tagsHTML = (item.tags || []).length
-    ? `<div class="card-tags">${item.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>`
-    : "";
-
-  return `
-    <a class="card"
-       href="${esc(item.url)}"
-       target="${esc(item.target || "_blank")}"
-       rel="noopener noreferrer"
-       data-id="${esc(item.id)}"
-       data-title="${esc(item.title).toLowerCase()}"
-       data-desc="${esc(item.description || "").toLowerCase()}"
-       data-tags="${esc((item.tags || []).join(" ").toLowerCase())}"
-       style="${accentStyle}"
-       title="${esc(item.title)}${item.url ? ` – ${esc(item.url)}` : ""}">
-      <div class="card-top">
-        <div class="card-icon">${iconHTML}</div>
-        ${statusHTML}
-      </div>
-      <div class="card-title">${esc(item.title)}</div>
-      ${descHTML}
-      ${tagsHTML}
-    </a>`;
-}
-
-function buildIconHTML(icon) {
-  if (!icon) return "🔗";
-  if (icon.startsWith("http://") || icon.startsWith("https://") || icon.startsWith("/")) {
-    return `<img src="${esc(icon)}" alt="" loading="lazy" />`;
-  }
-  return esc(icon);
-}
-
-// ── Status updates ────────────────────────────────────────────────────────────
-function updateStatusDots() {
-  $$(".status-dot[data-id]").forEach((dot) => {
-    const status = statuses[dot.dataset.id];
-    if (!status) return;
-
+function updateStatusDots(statuses) {
+  document.querySelectorAll(".status-dot[data-id]").forEach((dot) => {
+    const s = statuses[dot.dataset.id];
+    if (!s) return;
     dot.classList.remove("up", "slow", "down", "unknown");
-    const cls = dotClass(status);
+    const cls = s.up ? (s.responseTimeMs > 1000 ? "slow" : "up") : "down";
     dot.classList.add(cls);
-    dot.dataset.tooltip = dotLabel(status);
+    dot.dataset.tooltip = s.up ? `Online \u00b7 ${s.responseTimeMs}ms` : `Offline${s.error ? `: ${s.error}` : ""}`;
     dot.setAttribute("aria-label", `status ${cls}`);
   });
-}
-
-function dotClass(s) {
-  if (!s.up) return "down";
-  if (s.responseTimeMs > 1000) return "slow";
-  return "up";
-}
-
-function dotLabel(s) {
-  if (!s.up) return `Offline${s.error ? `: ${s.error}` : ""}`;
-  return `Online · ${s.responseTimeMs}ms`;
 }
 
 // ── Search / filter ───────────────────────────────────────────────────────────
 function applySearch(raw) {
   const q = raw.trim().toLowerCase();
-  state.query = q;
-
   let totalVisible = 0;
 
-  $$(".section").forEach((sec) => {
-    let sectionVisible = 0;
+  document.querySelectorAll(".section").forEach((sec) => {
+    let visible = 0;
     sec.querySelectorAll(".card").forEach((card) => {
-      const match =
-        !q ||
-        card.dataset.title.includes(q) ||
-        card.dataset.desc.includes(q) ||
-        card.dataset.tags.includes(q);
+      const match = !q || card.dataset.title.includes(q) || card.dataset.desc.includes(q) || card.dataset.tags.includes(q);
       card.hidden = !match;
-      if (match) sectionVisible++;
+      if (match) visible++;
     });
-    sec.hidden = sectionVisible === 0;
-    totalVisible += sectionVisible;
+    sec.hidden = visible === 0;
+    totalVisible += visible;
   });
 
-  el.empty().hidden = totalVisible > 0 || !q;
-  if (q) el.emptyQuery().textContent = q;
-}
-
-// ── Polling ───────────────────────────────────────────────────────────────────
-function startPolling() {
-  const interval = Math.max((config.checkInterval || 30), 5) * 1000;
-  setInterval(loadStatus, interval);
+  const emptyState = document.getElementById("empty-state");
+  emptyState.hidden = totalVisible > 0 || !q;
+  if (q) document.getElementById("empty-query").textContent = q;
 }
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
 async function triggerRefresh() {
-  const btn = el.btnRefresh();
+  const btn = document.getElementById("btn-refresh");
   btn.classList.add("spinning");
   try {
     await fetch("/api/reload", { method: "POST" });
-    await sleep(800);
-    await loadConfig();
-    renderDashboard();
-    await loadStatus();
-    showToast("✓ Dashboard refreshed");
+    window.location.reload();
   } catch {
-    showToast("⚠ Refresh failed");
-  } finally {
     btn.classList.remove("spinning");
   }
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
-let toastTimer = null;
-function showToast(msg, ms = 3000) {
-  const t = el.toast();
-  t.textContent = msg;
-  t.classList.add("visible");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("visible"), ms);
-}
-
 // ── Event bindings ────────────────────────────────────────────────────────────
 function bindEvents() {
-  el.search().addEventListener("input", (e) => applySearch(e.target.value));
-  el.btnRefresh().addEventListener("click", triggerRefresh);
+  const search = document.getElementById("search");
+  search.addEventListener("input", (e) => applySearch(e.target.value));
+  document.getElementById("btn-refresh").addEventListener("click", triggerRefresh);
 
   document.addEventListener("keydown", (e) => {
-    // "/" or Ctrl+K → focus search
-    if ((e.key === "/" || (e.ctrlKey && e.key === "k")) && document.activeElement !== el.search()) {
+    if ((e.key === "/" || (e.ctrlKey && e.key === "k")) && document.activeElement !== search) {
       e.preventDefault();
-      el.search().focus();
-      el.search().select();
+      search.focus();
+      search.select();
       return;
     }
-    // Esc → clear search
-    if (e.key === "Escape" && document.activeElement === el.search()) {
-      el.search().value = "";
+    if (e.key === "Escape" && document.activeElement === search) {
+      search.value = "";
       applySearch("");
-      el.search().blur();
+      search.blur();
       return;
     }
-    // R → refresh (when not typing)
     if (e.key === "r" && !isTyping()) {
       triggerRefresh();
     }
@@ -243,21 +99,7 @@ function bindEvents() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function esc(str) {
-  if (typeof str !== "string") return "";
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 function isTyping() {
   const tag = document.activeElement?.tagName;
   return tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.isContentEditable;
-}
-
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
 }
