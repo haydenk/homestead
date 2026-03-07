@@ -10,6 +10,12 @@ Homestead is a lightweight, self-hosted personal dashboard for monitoring and ac
 - [API](api.md) — REST API reference
 - [Development](development.md) — Contributing and local development guide
 
+## Preview
+
+| Dark | Light |
+|------|-------|
+| ![Dashboard dark mode](assets/dashboard-dark.png) | ![Dashboard light mode](assets/dashboard-light.png) |
+
 ## Quick start
 
 ```bash

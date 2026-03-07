@@ -5,6 +5,12 @@ A lightweight, self-hosted personal dashboard for monitoring and accessing your 
 ![Go 1.22+](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 
+## Preview
+
+| Dark | Light |
+|------|-------|
+| ![Dashboard dark mode](docs/assets/dashboard-dark.png) | ![Dashboard light mode](docs/assets/dashboard-light.png) |
+
 ## Features
 
 - **Service Dashboard** — Centralized hub for all your self-hosted applications organized into sections
