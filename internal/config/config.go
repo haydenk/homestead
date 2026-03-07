@@ -12,9 +12,9 @@ type Config struct {
 	Title         string    `toml:"title"          json:"title"`
 	Subtitle      string    `toml:"subtitle"       json:"subtitle"`
 	Logo          string    `toml:"logo"           json:"logo"`
-	Theme         string    `toml:"theme"          json:"theme"`          // dark | light
-	Columns       int       `toml:"columns"        json:"columns"`        // 1–6
-	CheckInterval int       `toml:"check_interval" json:"checkInterval"`  // seconds
+	Theme         string    `toml:"theme"          json:"theme"`         // dark | light
+	Columns       int       `toml:"columns"        json:"columns"`       // 1–6
+	CheckInterval int       `toml:"check_interval" json:"checkInterval"` // seconds
 	Footer        string    `toml:"footer"         json:"footer"`
 	Sections      []Section `toml:"sections"       json:"sections"`
 }
@@ -34,7 +34,7 @@ type Item struct {
 	Description string   `toml:"description"  json:"description"`
 	Icon        string   `toml:"icon"         json:"icon"`
 	Tags        []string `toml:"tags"         json:"tags"`
-	Target      string   `toml:"target"       json:"target"`      // _blank | _self
+	Target      string   `toml:"target"       json:"target"` // _blank | _self
 	StatusCheck bool     `toml:"status_check" json:"statusCheck"`
 	Color       string   `toml:"color"        json:"color"` // optional accent hex
 }

@@ -104,8 +104,8 @@ title = "Third"
 	}
 
 	tests := []struct {
-		si, ii int
-		wantID string
+		si, ii     int
+		wantID     string
 		wantTarget string
 	}{
 		{0, 0, "s0-i0", "_blank"},
