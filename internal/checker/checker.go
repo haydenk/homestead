@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"homestead/internal/config"
+	"github.com/haydenk/homestead/internal/config"
 )
 
 // Status holds the result of a single health check.

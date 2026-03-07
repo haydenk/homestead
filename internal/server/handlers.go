@@ -12,8 +12,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"homestead/internal/checker"
-	"homestead/internal/config"
+	"github.com/haydenk/homestead/internal/checker"
+	"github.com/haydenk/homestead/internal/config"
 )
 
 type pageData struct {

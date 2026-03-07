@@ -1,4 +1,4 @@
-module homestead
+module github.com/haydenk/homestead
 
 go 1.22.0
 
