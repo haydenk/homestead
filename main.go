@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"homestead/internal/checker"
-	"homestead/internal/config"
-	"homestead/internal/server"
+	"github.com/haydenk/homestead/internal/checker"
+	"github.com/haydenk/homestead/internal/config"
+	"github.com/haydenk/homestead/internal/server"
 )
 
 //go:embed web
