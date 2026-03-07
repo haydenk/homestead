@@ -2,6 +2,10 @@
 
 A lightweight, self-hosted personal dashboard for monitoring and accessing your home lab services. Built with Go and vanilla JavaScript — no framework dependencies, no bloat.
 
+[![CI](https://github.com/haydenk/homestead/actions/workflows/ci.yml/badge.svg)](https://github.com/haydenk/homestead/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/haydenk/homestead)](https://github.com/haydenk/homestead/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/haydenk/homestead)](https://goreportcard.com/report/github.com/haydenk/homestead)
+[![Docker Image](https://img.shields.io/badge/ghcr.io-haydenk%2Fhomestead-blue?logo=docker)](https://github.com/haydenk/homestead/pkgs/container/homestead)
 ![Go 1.22+](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 
