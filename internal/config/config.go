@@ -34,7 +34,7 @@ type Item struct {
 	Description string   `toml:"description"`
 	Icon        string   `toml:"icon"`
 	Tags        []string `toml:"tags"`
-	Target      string   `toml:"target"`       // _blank | _self
+	Target      string   `toml:"target"` // _blank | _self
 	StatusCheck bool     `toml:"status_check"`
 	Color       string   `toml:"color"` // optional accent hex
 }
