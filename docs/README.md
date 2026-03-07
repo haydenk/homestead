@@ -6,6 +6,7 @@ Homestead is a lightweight, self-hosted personal dashboard for monitoring and ac
 
 - [Installation](installation.md) — Build from source, Docker, and system packages
 - [Configuration](configuration.md) — Full reference for `config.toml`
+- [Reverse Proxy](reverse-proxy.md) — Running behind nginx or Caddy
 - [Icons](icons.md) — Emoji icon reference with ASCII text alternatives
 - [API](api.md) — REST API reference
 - [Development](development.md) — Contributing and local development guide
