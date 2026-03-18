@@ -24,8 +24,8 @@ jobs:
           fi
 
           if [ "$TARGET" = "develop" ]; then
-            if [[ "$SOURCE" != feature/* && "$SOURCE" != bugfix/* && "$SOURCE" != chore/* && "$SOURCE" != "master" ]]; then
-              echo "PRs to develop must come from feature/*, bugfix/*, chore/*, or master branches (got: $SOURCE)"
+            if [[ "$SOURCE" != feature/* && "$SOURCE" != bugfix/* && "$SOURCE" != chore/* && "$SOURCE" != "master" && "$SOURCE" != dependabot/* ]]; then
+              echo "PRs to develop must come from feature/*, bugfix/*, chore/*, dependabot/*, or master branches (got: $SOURCE)"
               exit 1
             fi
           fi
