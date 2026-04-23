@@ -79,7 +79,7 @@ func newTemplate(webFS fs.FS) *template.Template {
 // GET /
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	data := pageData{
-		Config:   s.cfg,
+		Config:   s.getCfg(),
 		Statuses: s.checker.GetAll(),
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -145,7 +145,7 @@ func (s *Server) handleReload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
 		return
 	}
-	s.cfg = newCfg
+	s.setCfg(newCfg)
 	s.checker.UpdateConfig(newCfg)
 	s.checker.CheckNow()
 	log.Printf("Config reloaded from %s", s.configPath)
