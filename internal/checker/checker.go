@@ -27,6 +27,7 @@ type Checker struct {
 	mu       sync.RWMutex
 	results  map[string]*Status
 	stopCh   chan struct{}
+	stopOnce sync.Once
 	notifyCh chan struct{}
 	client   *http.Client
 }
@@ -74,9 +75,9 @@ func (c *Checker) Start() {
 	}()
 }
 
-// Stop halts background checks.
+// Stop halts background checks. Safe to call multiple times.
 func (c *Checker) Stop() {
-	close(c.stopCh)
+	c.stopOnce.Do(func() { close(c.stopCh) })
 }
 
 // Notify returns a channel that receives a signal after each completed check round.

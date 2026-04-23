@@ -419,6 +419,20 @@ func TestStartStop_DoesNotPanic(t *testing.T) {
 	c.Stop() // must not hang or panic
 }
 
+// Regression for issue #39: Stop() must be idempotent so deferred
+// cleanup layered on top of explicit shutdown logic does not
+// panic with "close of closed channel".
+func TestStop_IdempotentNoPanicOnDoubleCall(t *testing.T) {
+	c := New(&config.Config{CheckInterval: 1})
+	c.Stop()
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("second Stop() panicked: %v", r)
+		}
+	}()
+	c.Stop()
+}
+
 // --- CheckNow ---
 
 func TestCheckNow_IsNonBlocking(t *testing.T) {
