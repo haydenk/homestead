@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Labeler workflow on fork PRs** — Switched the `Labeler` workflow's PR trigger from `pull_request` to `pull_request_target` so `GITHUB_TOKEN` retains write permissions on PRs from forks; the action only reads changed file paths and does not check out fork code (#77)
+
 
 ## [v0.3.0] - 2026-03-07
 
