@@ -1,4 +1,6 @@
-# Homestead
+<p align="center">
+  <img src="docs/assets/homestead-logo.png" alt="Homestead Logo" width="300">
+</p>
 
 A lightweight, self-hosted personal dashboard for monitoring and accessing your home lab services. Built with Go and vanilla JavaScript — no framework dependencies, no bloat.
 
