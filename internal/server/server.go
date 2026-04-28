@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,6 +18,10 @@ import (
 
 // Server holds all runtime state for the HTTP server.
 type Server struct {
+	// cfgMu guards cfg so that concurrent request handlers (handleIndex
+	// reads s.cfg, handleReload swaps it) don't race. Before this, go
+	// test -race flagged a data race between GET / and POST /api/reload.
+	cfgMu      sync.RWMutex
 	cfg        *config.Config
 	configPath string
 	checker    *checker.Checker
@@ -27,6 +32,20 @@ type Server struct {
 	mux        *http.ServeMux
 	hub        *hub
 	upgrader   websocket.Upgrader
+}
+
+// getCfg returns the current config under the server's read lock.
+func (s *Server) getCfg() *config.Config {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.cfg
+}
+
+// setCfg swaps the active config under the server's write lock.
+func (s *Server) setCfg(cfg *config.Config) {
+	s.cfgMu.Lock()
+	defer s.cfgMu.Unlock()
+	s.cfg = cfg
 }
 
 // New creates a configured Server.
